@@ -16,6 +16,14 @@ import (
 // TCP 层超时，而这些调用都发生在 HTTP handler 内。
 var ghAPIClient = &http.Client{Timeout: 15 * time.Second}
 
+// fluxorReleaseAPI 面板自身更新的版本源。
+//
+// 指向自建 fork：上游模板存在 TUN 的 IPv6 地址硬编码缺陷（宿主禁用 IPv6 时
+// 新建 tun 接口无法接受该地址，内核返回 EACCES，TUN 启动失败并报
+// "configure tun interface: permission denied"），跟随上游会把修复冲掉。
+// 改用自有仓库后，自更新只会拉到本仓库发布的构建。
+const fluxorReleaseAPI = "https://api.github.com/repos/xulawyer1982/fluxor/releases/latest"
+
 type githubRelease struct {
 	TagName string `json:"tag_name"`
 	Body    string `json:"body"`
@@ -95,7 +103,7 @@ func getLatestVersion(force bool) (string, error) {
 		cacheMutex.RUnlock()
 	}
 
-	url := "https://api.github.com/repos/shuangji66/fluxor/releases/latest"
+	url := fluxorReleaseAPI
 	resp, err := ghAPIClient.Get(url)
 	if err != nil {
 		return "", err
@@ -283,7 +291,7 @@ func getLatestReleaseInfo(force bool) (*githubRelease, error) {
 		releaseCacheMutex.RUnlock()
 	}
 
-	apiURL := "https://api.github.com/repos/shuangji66/fluxor/releases/latest"
+	apiURL := fluxorReleaseAPI
 	resp, err := ghAPIClient.Get(apiURL)
 	if err != nil {
 		return nil, err
